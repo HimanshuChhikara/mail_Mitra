@@ -5,6 +5,7 @@ import {
   getSessionHandler,
   disconnectGmail,
   sendGmailEmail,
+  getEmailStats,
 } from '../controllers/authController';
 
 const router = Router();
@@ -23,5 +24,8 @@ router.post('/disconnect', disconnectGmail);
 
 // Send email via Gmail
 router.post('/send', sendGmailEmail);
+
+// Get email stats for dashboard
+router.get('/stats', getEmailStats);
 
 export default router;

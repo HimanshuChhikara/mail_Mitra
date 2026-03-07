@@ -72,6 +72,7 @@ function GeneratePageContent() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [copiedSubject, setCopiedSubject] = useState(false);
+  const [remainingEmails, setRemainingEmails] = useState<number | null>(null);
   
   // Gmail integration state
   const [gmailConnected, setGmailConnected] = useState(false);
@@ -195,6 +196,8 @@ function GeneratePageContent() {
 
       if (data.success) {
         setSendSuccess(true);
+        // Clear recipient email after successful send
+        setFormData(prev => ({ ...prev, recipientEmail: '' }));
         setTimeout(() => setSendSuccess(false), 5000);
       } else {
         setError(data.error || 'Failed to send email');
@@ -267,7 +270,7 @@ function GeneratePageContent() {
       console.log('API Response:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate email');
+        throw new Error(data.error || data.message || 'Failed to generate email');
       }
 
       // API returns data nested inside 'data' object
@@ -277,6 +280,11 @@ function GeneratePageContent() {
         subject: emailData.subject,
         body: emailData.body,
       });
+      
+      // Update remaining emails count
+      if (typeof data.remaining === 'number') {
+        setRemainingEmails(data.remaining);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -316,6 +324,11 @@ function GeneratePageContent() {
           <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium px-4 py-2 rounded-full mb-6">
             <span>✨</span>
             Smart Email Generator
+            {remainingEmails !== null && (
+              <span className="ml-2 bg-orange-500/20 px-2 py-0.5 rounded-full text-xs">
+                {remainingEmails} free left today
+              </span>
+            )}
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
@@ -324,6 +337,18 @@ function GeneratePageContent() {
           <p className="text-gray-400 max-w-2xl mx-auto">
             Fill in your details and we&apos;ll craft a personalized, culturally-aware cold email in seconds.
           </p>
+          
+          {/* Dashboard Link for logged in users */}
+          {gmailConnected && (
+            <a 
+              href="/dashboard" 
+              className="inline-flex items-center gap-2 mt-4 text-gray-400 hover:text-white text-sm transition-colors"
+            >
+              <span>📊</span>
+              View your email dashboard
+              <span>→</span>
+            </a>
+          )}
         </div>
       </section>
 
@@ -671,9 +696,16 @@ function GeneratePageContent() {
 
                           {/* Success Message */}
                           {sendSuccess && (
-                            <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                              <span>✅</span>
-                              Email sent successfully!
+                            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg text-sm animate-pulse">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                  <span className="text-xl">🎉</span>
+                                </div>
+                                <div>
+                                  <p className="font-semibold">Email sent successfully!</p>
+                                  <p className="text-green-600 text-xs mt-0.5">Your email is on its way to the recipient.</p>
+                                </div>
+                              </div>
                             </div>
                           )}
 

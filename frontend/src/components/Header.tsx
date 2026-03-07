@@ -2,10 +2,26 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSyncExternalStore } from 'react';
+
+// Subscribe to localStorage changes
+const subscribe = (callback: () => void) => {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+};
+
+const getSnapshot = () => {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem('gmail_token');
+};
+
+const getServerSnapshot = () => false;
 
 export default function Header() {
   const pathname = usePathname();
   const isGeneratePage = pathname === '/generate';
+  const isDashboardPage = pathname === '/dashboard';
+  const isLoggedIn = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
@@ -32,27 +48,39 @@ export default function Header() {
             <Link href="/#how-it-works" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">
               How It Works
             </Link>
-            <Link href="/#reviews" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">
-              Reviews
-            </Link>
+            {isLoggedIn && (
+              <Link href="/dashboard" className="text-gray-300 hover:text-white text-sm font-medium transition-colors flex items-center gap-1">
+                <span>📊</span> Dashboard
+              </Link>
+            )}
           </nav>
 
           {/* CTA Button */}
-          {isGeneratePage ? (
-            <Link
-              href="/"
-              className="text-gray-300 hover:text-white text-sm font-medium transition-colors flex items-center gap-2"
-            >
-              <span>←</span> Back to Home
-            </Link>
-          ) : (
-            <Link
-              href="/generate"
-              className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2.5 px-5 rounded-lg transition-colors"
-            >
-              Start Writing Free
-            </Link>
-          )}
+          <div className="flex items-center gap-4">
+            {isLoggedIn && !isDashboardPage && (
+              <Link
+                href="/dashboard"
+                className="hidden sm:flex text-gray-300 hover:text-white text-sm font-medium transition-colors items-center gap-1"
+              >
+                <span>📊</span> Dashboard
+              </Link>
+            )}
+            {isGeneratePage || isDashboardPage ? (
+              <Link
+                href="/"
+                className="text-gray-300 hover:text-white text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <span>←</span> Back to Home
+              </Link>
+            ) : (
+              <Link
+                href="/generate"
+                className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2.5 px-5 rounded-lg transition-colors"
+              >
+                Start Writing Free
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>

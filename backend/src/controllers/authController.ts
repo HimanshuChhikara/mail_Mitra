@@ -15,6 +15,7 @@ import {
   deleteSession,
   UserSession,
 } from '../services/sessionService';
+import { EmailSent } from '../models/EmailSent';
 
 // Generate JWT token
 const generateToken = (email: string): string => {
@@ -228,12 +229,44 @@ export const sendGmailEmail = async (req: Request, res: Response): Promise<void>
     );
 
     if (result.success) {
+      // Track sent email in database
+      try {
+        await EmailSent.create({
+          senderEmail: session.email,
+          recipientEmail: to,
+          subject: subject,
+          prospectName: req.body.prospectName || '',
+          companyName: req.body.companyName || '',
+          status: 'sent',
+          sentAt: new Date(),
+          messageId: result.messageId,
+        });
+      } catch (trackError) {
+        console.error('Failed to track sent email:', trackError);
+        // Don't fail the request if tracking fails
+      }
+
       res.json({
         success: true,
         message: 'Email sent successfully!',
         messageId: result.messageId,
       });
     } else {
+      // Track failed email
+      try {
+        await EmailSent.create({
+          senderEmail: session.email,
+          recipientEmail: to,
+          subject: subject,
+          prospectName: req.body.prospectName || '',
+          companyName: req.body.companyName || '',
+          status: 'failed',
+          sentAt: new Date(),
+        });
+      } catch (trackError) {
+        console.error('Failed to track failed email:', trackError);
+      }
+
       res.status(500).json({
         success: false,
         error: result.error || 'Failed to send email',
@@ -242,5 +275,84 @@ export const sendGmailEmail = async (req: Request, res: Response): Promise<void>
   } catch (error: any) {
     console.error('Send email error:', error?.message);
     res.status(500).json({ success: false, error: 'Failed to send email' });
+  }
+};
+
+// Get email stats for dashboard
+export const getEmailStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (!token) {
+      res.status(401).json({ success: false, error: 'Not authenticated' });
+      return;
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      res.status(401).json({ success: false, error: 'Invalid token' });
+      return;
+    }
+
+    // Get all sent emails for this user
+    const emails = await EmailSent.find({ senderEmail: decoded.email })
+      .sort({ sentAt: -1 })
+      .limit(50)
+      .lean();
+
+    // Calculate stats
+    const totalSent = await EmailSent.countDocuments({ 
+      senderEmail: decoded.email, 
+      status: 'sent' 
+    });
+    
+    const totalFailed = await EmailSent.countDocuments({ 
+      senderEmail: decoded.email, 
+      status: 'failed' 
+    });
+
+    // Get today's count
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todaySent = await EmailSent.countDocuments({
+      senderEmail: decoded.email,
+      status: 'sent',
+      sentAt: { $gte: todayStart },
+    });
+
+    // Get this week's count
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - 7);
+    const weekSent = await EmailSent.countDocuments({
+      senderEmail: decoded.email,
+      status: 'sent',
+      sentAt: { $gte: weekStart },
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        totalSent,
+        totalFailed,
+        todaySent,
+        weekSent,
+        successRate: totalSent + totalFailed > 0 
+          ? Math.round((totalSent / (totalSent + totalFailed)) * 100) 
+          : 100,
+      },
+      recentEmails: emails.map(email => ({
+        id: email._id,
+        recipientEmail: email.recipientEmail,
+        subject: email.subject,
+        prospectName: email.prospectName,
+        companyName: email.companyName,
+        status: email.status,
+        sentAt: email.sentAt,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Get stats error:', error?.message);
+    res.status(500).json({ success: false, error: 'Failed to get stats' });
   }
 };
