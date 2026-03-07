@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function Footer() {
   return (
     <footer className="bg-slate-900 py-12 border-t border-slate-800">
@@ -30,11 +32,19 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="pt-8 text-center">
+        {/* Links & Copyright */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">
             © 2026 MailMitra. Built for the bold, the ambitious, and the hard-working professionals of India.
           </p>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
