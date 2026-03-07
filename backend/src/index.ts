@@ -61,9 +61,23 @@ app.set('trust proxy', 1);
 app.use('/api/email', emailRoutes);
 app.use('/api/auth', authRoutes);
 
+// Debug: Log registered routes
+console.log('📋 Registered routes:');
+console.log('  - /api/email');
+console.log('  - /api/auth');
+console.log('  - /api/health');
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'MailMitra API is running' });
+});
+
+// Debug route to check if auth routes are registered
+app.get('/api/debug/routes', (req, res) => {
+  res.json({
+    routes: ['/api/email', '/api/auth', '/api/health'],
+    authRoutesLoaded: !!authRoutes,
+  });
 });
 
 // Start server
