@@ -65,6 +65,9 @@ export default function Header() {
             <Link href="/#how-it-works" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">
               How It Works
             </Link>
+            <Link href="/reply" className="text-gray-300 hover:text-white text-sm font-medium transition-colors flex items-center gap-1">
+              <span>💬</span> Smart Reply
+            </Link>
             {isLoggedIn && (
               <Link href="/dashboard" className="text-gray-300 hover:text-white text-sm font-medium transition-colors flex items-center gap-1">
                 <span>📊</span> Dashboard

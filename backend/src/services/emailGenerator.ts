@@ -179,3 +179,77 @@ export const generateEmail = async (input: EmailInput): Promise<GeneratedEmail> 
 
   return parseResponse(response);
 };
+
+// Smart Reply Interface
+export interface ReplyInput {
+  originalEmail: string;
+  context?: string;
+  tone: 'professional' | 'friendly' | 'concise' | 'enthusiastic';
+}
+
+// Build prompt for reply generation
+const buildReplyPrompt = (input: ReplyInput): string => {
+  const toneGuidelines = {
+    professional: 'professional and business-like, maintaining formal etiquette',
+    friendly: 'warm and approachable, like talking to a colleague',
+    concise: 'brief and to-the-point, respecting their time',
+    enthusiastic: 'energetic and positive, showing genuine interest'
+  };
+
+  return `You are an expert email writer. Generate a smart reply to the following email.
+
+ORIGINAL EMAIL:
+${input.originalEmail}
+
+${input.context ? `ADDITIONAL CONTEXT:\n${input.context}\n\n` : ''}
+TONE: ${toneGuidelines[input.tone]}
+
+INSTRUCTIONS:
+- Write a ${input.tone} reply that directly addresses the email
+- Keep it under 150 words
+- Use proper email structure (greeting, body, closing)
+- Be natural and human-sounding
+- Match the formality level of the original email
+- If the original email asks questions, answer them
+- If appropriate, suggest next steps or action items
+- Sign off appropriately (don't include a signature block, just the closing line)
+
+Generate ONLY the reply email body (no subject line needed):`;
+};
+
+// Generate reply using AI
+export const generateReply = async (input: ReplyInput): Promise<string> => {
+  console.log('💬 Generating smart reply with tone:', input.tone);
+  const prompt = buildReplyPrompt(input);
+  let response: string;
+
+  // Try OpenAI first (faster), fallback to Gemini if OpenAI fails
+  if (config.openaiApiKey) {
+    try {
+      console.log('🔄 Trying OpenAI API for reply...');
+      response = await generateWithOpenAI(prompt);
+      console.log('✅ Reply generated with OpenAI');
+    } catch (openaiError: any) {
+      console.log('⚠️ OpenAI failed:', openaiError?.message, '- Falling back to Gemini...');
+      try {
+        response = await generateWithGemini(prompt, 15000);
+        console.log('✅ Reply generated with Gemini');
+      } catch (geminiError: any) {
+        console.error('❌ Gemini also failed:', geminiError?.message);
+        throw new Error('Both AI services are unavailable. Please try again later.');
+      }
+    }
+  } else {
+    // Only Gemini available
+    try {
+      console.log('🔄 Trying Gemini API for reply...');
+      response = await generateWithGemini(prompt, 15000);
+      console.log('✅ Reply generated with Gemini');
+    } catch (geminiError: any) {
+      console.error('❌ Gemini failed:', geminiError?.message);
+      throw new Error('AI service is unavailable. Please try again later.');
+    }
+  }
+
+  return response.trim();
+};

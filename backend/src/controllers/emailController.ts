@@ -126,3 +126,75 @@ export const checkLimitController = async (req: Request, res: Response): Promise
     });
   }
 };
+
+export const generateReplyController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const ipAddress = req.ip || req.socket.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || '';
+
+    // Check rate limit
+    const { allowed, remaining, resetTime } = await checkRateLimit(ipAddress);
+
+    if (!allowed) {
+      res.status(429).json({
+        success: false,
+        error: 'Daily limit reached',
+        message: 'You have used all 5 free replies for today. Come back tomorrow!',
+        resetTime,
+        remaining: 0,
+      });
+      return;
+    }
+
+    // Validate input
+    const { originalEmail, context, tone } = req.body;
+    
+    if (!originalEmail || typeof originalEmail !== 'string' || originalEmail.trim().length === 0) {
+      res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        message: 'Original email is required',
+      });
+      return;
+    }
+
+    if (originalEmail.length > 5000) {
+      res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        message: 'Email is too long (max 5000 characters)',
+      });
+      return;
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeInput(originalEmail);
+    const sanitizedContext = context ? sanitizeInput(context) : '';
+    const validTones = ['professional', 'friendly', 'formal', 'enthusiastic'];
+    const selectedTone = validTones.includes(tone) ? tone : 'professional';
+
+    // Generate reply using AI
+    const { generateReply } = await import('../services/emailGenerator');
+    const reply = await generateReply({
+      originalEmail: sanitizedEmail,
+      context: sanitizedContext,
+      tone: selectedTone,
+    });
+
+    // Increment usage after successful generation
+    await incrementUsage(ipAddress, userAgent);
+
+    res.json({
+      success: true,
+      data: { reply },
+      remaining: remaining - 1,
+    });
+  } catch (error: any) {
+    console.error('Reply generation error:', error?.message || error);
+    res.status(500).json({
+      success: false,
+      error: 'Generation failed',
+      message: error?.message || 'Failed to generate reply. Please try again.',
+    });
+  }
+};

@@ -2,10 +2,10 @@
 
 export default function StatsSection() {
   const stats = [
-    { number: '500+', label: 'Professionals Using MailMitra' },
-    { number: '10,000+', label: 'Emails Generated' },
-    { number: '38%', label: 'Avg. Reply Rate Improvement' },
-    { number: '< 60s', label: 'Email Generated in' },
+    { number: 'AI-Powered', label: 'Smart Email Generation' },
+    { number: '5 Free', label: 'Emails Per Day' },
+    { number: '< 60s', label: 'Average Generation Time' },
+    { number: 'Gmail', label: 'Direct Integration' },
   ];
 
   return (
@@ -14,7 +14,7 @@ export default function StatsSection() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat, index) => (
             <div key={index} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-orange-500 mb-2">
+              <div className="text-2xl md:text-3xl font-bold text-orange-500 mb-2">
                 {stat.number}
               </div>
               <div className="text-sm text-gray-500">
