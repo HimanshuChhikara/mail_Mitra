@@ -12,6 +12,27 @@ export default function InteractiveDemo() {
   const [originalEmail, setOriginalEmail] = useState('');
   const [tone, setTone] = useState('professional');
 
+  // Check if form is ready to generate
+  const isWriteReady = recipient.trim() && keyPoints.trim();
+  const isReplyReady = originalEmail.trim();
+
+  // Quick template click handlers
+  const handleTemplateClick = (template: string) => {
+    if (template === 'Sales Pitch') {
+      setRecipient('Marketing Manager at Tech Startup');
+      setKeyPoints('I\'m a freelance web developer specializing in React and Next.js. I noticed your company is growing rapidly. I can help build your marketing website in 3 weeks with modern design and SEO optimization.');
+    } else if (template === 'Follow Up') {
+      setRecipient('Potential Client from Last Week');
+      setKeyPoints('Following up on our conversation about the web project. I\'ve prepared some mockups and would love to show you. Available this week for a quick 15-min call?');
+    } else if (template === 'Meeting Request') {
+      setRecipient('CEO of Growing SaaS Company');
+      setKeyPoints('I help SaaS companies improve their conversion rates. Would love to discuss how we can optimize your landing pages. Are you free for a 20-minute call next week?');
+    } else if (template === 'Partnership') {
+      setRecipient('Founder of Complementary Business');
+      setKeyPoints('I run a design agency and noticed we serve similar clients. I think there\'s an opportunity for us to collaborate and refer clients to each other. Would you be open to exploring this?');
+    }
+  };
+
   const tones = [
     { value: 'professional', label: 'Professional', icon: '💼' },
     { value: 'friendly', label: 'Friendly', icon: '😊' },
@@ -93,7 +114,8 @@ export default function InteractiveDemo() {
                     {quickTemplates.map((template) => (
                       <button
                         key={template.label}
-                        className={`${template.bg} border rounded-lg p-3 transition-all hover:scale-105 hover:shadow-md`}
+                        onClick={() => handleTemplateClick(template.label)}
+                        className={`${template.bg} border rounded-lg p-3 transition-all hover:scale-105 hover:shadow-md active:scale-95`}
                       >
                         <div className="text-2xl mb-1">{template.icon}</div>
                         <div className="text-xs font-medium text-gray-700">{template.label}</div>
@@ -104,33 +126,58 @@ export default function InteractiveDemo() {
 
                 {/* Recipient */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    👤 Who are you sending this to?
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center justify-between">
+                    <span>👤 Who are you sending this to?</span>
+                    {recipient && (
+                      <span className="text-xs font-normal text-green-600 flex items-center gap-1">
+                        <span>✓</span> {recipient.length} characters
+                      </span>
+                    )}
                   </label>
                   <input
                     type="text"
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
                     placeholder="e.g., Marketing Manager at Tech Startup"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all"
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 outline-none transition-all ${
+                      recipient 
+                        ? 'border-green-300 focus:border-green-500 focus:ring-green-200 bg-green-50/30' 
+                        : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'
+                    }`}
                   />
                 </div>
 
                 {/* Key Points */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    📝 Key points to cover:
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center justify-between">
+                    <span>📝 Key points to cover:</span>
+                    {keyPoints && (
+                      <span className="text-xs font-normal text-green-600 flex items-center gap-1">
+                        <span>✓</span> {keyPoints.length} characters
+                      </span>
+                    )}
                   </label>
                   <textarea
                     value={keyPoints}
                     onChange={(e) => setKeyPoints(e.target.value)}
                     placeholder="e.g., I'm a freelance web developer specializing in React. I noticed your company is growing. I can help build your website in 3 weeks."
                     rows={4}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all resize-none"
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 outline-none transition-all resize-none ${
+                      keyPoints 
+                        ? 'border-green-300 focus:border-green-500 focus:ring-green-200 bg-green-50/30' 
+                        : 'border-gray-200 focus:border-orange-500 focus:ring-orange-200'
+                    }`}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    💡 Tip: Be specific about your value proposition and what makes you different
-                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-gray-500">
+                      💡 Tip: Be specific about your value proposition and what makes you different
+                    </p>
+                    {isWriteReady && (
+                      <span className="text-xs font-medium text-green-600 animate-pulse">
+                        Ready to generate! ✨
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tone Selector */}
@@ -160,21 +207,32 @@ export default function InteractiveDemo() {
                 {/* CTA Button */}
                 <Link
                   href="/generate"
-                  className="group relative w-full bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:via-orange-600 hover:to-orange-700 text-white font-bold py-5 px-8 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl flex items-center justify-center gap-3 overflow-hidden"
+                  className={`group relative w-full bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 hover:from-orange-700 hover:via-orange-600 hover:to-orange-700 text-white font-bold py-5 px-8 rounded-xl transition-all duration-300 transform hover:shadow-2xl flex items-center justify-center gap-3 overflow-hidden ${
+                    isWriteReady 
+                      ? 'hover:scale-[1.02] animate-pulse' 
+                      : 'opacity-60 cursor-not-allowed'
+                  }`}
+                  onClick={(e) => !isWriteReady && e.preventDefault()}
                 >
                   {/* Animated shimmer */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  {isWriteReady && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  )}
                   
                   <span className="relative text-2xl group-hover:rotate-12 transition-transform duration-300">✨</span>
-                  <span className="relative text-lg">Generate My Email Now</span>
-                  <svg 
-                    className="relative w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  <span className="relative text-lg">
+                    {isWriteReady ? 'Generate My Email Now' : 'Fill in details to generate'}
+                  </span>
+                  {isWriteReady && (
+                    <svg 
+                      className="relative w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  )}
                 </Link>
               </>
             ) : (
@@ -182,16 +240,30 @@ export default function InteractiveDemo() {
               <>
                 {/* Original Email */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    📧 Paste the email you received:
+                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center justify-between">
+                    <span>📧 Paste the email you received:</span>
+                    {originalEmail && (
+                      <span className="text-xs font-normal text-green-600 flex items-center gap-1">
+                        <span>✓</span> {originalEmail.length} characters
+                      </span>
+                    )}
                   </label>
                   <textarea
                     value={originalEmail}
                     onChange={(e) => setOriginalEmail(e.target.value)}
                     placeholder="Paste the entire email you want to reply to..."
                     rows={6}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 outline-none transition-all resize-none ${
+                      originalEmail 
+                        ? 'border-green-300 focus:border-green-500 focus:ring-green-200 bg-green-50/30' 
+                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+                    }`}
                   />
+                  {isReplyReady && (
+                    <p className="text-xs font-medium text-green-600 mt-1 animate-pulse flex items-center gap-1">
+                      <span>✨</span> Ready to generate reply!
+                    </p>
+                  )}
                 </div>
 
                 {/* Tone Selector */}
@@ -221,21 +293,32 @@ export default function InteractiveDemo() {
                 {/* CTA Button */}
                 <Link
                   href="/reply"
-                  className="group relative w-full bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600 hover:from-blue-700 hover:via-blue-600 hover:to-purple-700 text-white font-bold py-5 px-8 rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:shadow-2xl flex items-center justify-center gap-3 overflow-hidden"
+                  className={`group relative w-full bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600 hover:from-blue-700 hover:via-blue-600 hover:to-purple-700 text-white font-bold py-5 px-8 rounded-xl transition-all duration-300 transform hover:shadow-2xl flex items-center justify-center gap-3 overflow-hidden ${
+                    isReplyReady 
+                      ? 'hover:scale-[1.02] animate-pulse' 
+                      : 'opacity-60 cursor-not-allowed'
+                  }`}
+                  onClick={(e) => !isReplyReady && e.preventDefault()}
                 >
                   {/* Animated shimmer */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  {isReplyReady && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  )}
                   
                   <span className="relative text-2xl group-hover:rotate-12 transition-transform duration-300">✨</span>
-                  <span className="relative text-lg">Generate Smart Reply</span>
-                  <svg 
-                    className="relative w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
+                  <span className="relative text-lg">
+                    {isReplyReady ? 'Generate Smart Reply' : 'Paste email to reply'}
+                  </span>
+                  {isReplyReady && (
+                    <svg 
+                      className="relative w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  )}
                 </Link>
               </>
             )}
